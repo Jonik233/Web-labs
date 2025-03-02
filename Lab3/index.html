@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Калькулятор викидів</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #e0e0e0;
+            text-align: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+            display: inline-block;
+        }
+        input {
+            width: 80px;
+            padding: 5px;
+            margin: 5px;
+            text-align: center;
+        }
+        .result {
+            background: #f8f8f8;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.1);
+            margin-top: 20px;
+        }
+        button {
+            font-size: 18px;
+            padding: 10px 20px;
+            margin: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>Калькулятор викидів</h2>
+        <label>Потужність (кВт): <input type="number" id="power" value="0" step="0.01"></label>
+        <label>Стандартна похибка (поточний): <input type="number" id="current_std" value="0" step="0.01"></label>
+        <label>Цільова похибка (цільова): <input type="number" id="target_std" value="0" step="0.01"></label>
+        <label>Вартість електроенергії (грн/кВт): <input type="number" id="cost" value="0" step="0.01"></label>
+
+        <div>
+            <button onclick="calculate()">Розрахувати</button>
+        </div>
+
+        <div class="result">
+            <h3>Результат розрахунків</h3>
+            <p>Результат: <span id="result">0.00</span> грн</p>
+        </div>
+    </div>
+
+    <script>
+        const efficiencyDustRemoval = 0.985;
+        const PI = Math.PI;
+
+        function integrate(a, b, step, f) {
+            let sum = 0.0;
+            let x = a;
+            while (x < b) {
+                sum += f(x) * step;
+                x += step;
+            }
+            return sum;
+        }
+
+        function prob_distribution(p, Pc, sigma) {
+            return (1 / (sigma * Math.sqrt(2 * PI))) * Math.exp(-Math.pow(p - Pc, 2) / (2 * Math.pow(sigma, 2)));
+        }
+
+        function getValues() {
+            const power = parseFloat(document.getElementById('power').value) || 0.0;
+            const currentStd = parseFloat(document.getElementById('current_std').value) || 0.0;
+            const targetStd = parseFloat(document.getElementById('target_std').value) || 0.0;
+            const cost = parseFloat(document.getElementById('cost').value) || 0.0;
+            return { power, currentStd, targetStd, cost };
+        }
+
+        function calculate() {
+            const { power, currentStd, targetStd, cost } = getValues();
+
+            const deltaW = integrate(4.75, 5.25, 0.01, (p) => prob_distribution(p, power, targetStd));
+            const W = power * 24 * deltaW;
+            let P = W * cost;
+
+            const W2 = power * 24 * (1 - deltaW);
+            const S = W2 * cost;
+
+            P -= S;
+
+            document.getElementById("result").textContent = P.toFixed(1);
+        }
+    </script>
+
+</body>
+</html>
